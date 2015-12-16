@@ -16,9 +16,26 @@ public with sharing class HierarchyExtractor {
 	
 	public static List<accountNode> extractAccountHierarchy()
 	{
+		Map<Id,accountNode> levelParentMap = new Map<Id,accountNode>{null => null};	// we will first fetch top level parent
+		return extractAccountHierarchy(levelParentMap);
+	}
+	
+	public static List<accountNode> extractAccountHierarchy(List<Account> parents)
+	{
+		Map<Id,accountNode> levelParentMap = new Map<Id,accountNode>();
+		for(Account acc : parents) levelParentMap.put(acc.Id,new accountNode(acc));
+		return extractAccountHierarchy(levelParentMap);
+	}
+	
+	private static List<accountNode> extractAccountHierarchy(Map<Id,accountNode> levelParentMap)
+	{
 		// all these lists and maps reference the same place in memory, acting like pointers in C++
 		List<accountNode> accountTree = new List<accountNode>();
-		Map<Id,accountNode> levelParentMap = new Map<Id,accountNode>{null => null};	// we will first fetch top level parent
+		
+		for(Id key : levelParentMap.keySet())
+		{
+			if(key != null) accountTree.add(levelParentMap.get(key));	// top level parents need to go into return list as "roots"
+		}
 		
 		while(!levelParentMap.isEmpty())
 		{
