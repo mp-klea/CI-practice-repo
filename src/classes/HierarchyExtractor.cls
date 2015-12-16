@@ -7,27 +7,25 @@
  
 public with sharing class HierarchyExtractor {
 	
-	// EXAMPLE 1: object-specific extractor
-	// PRO: easier to code
-	// PRO: more efficient SOQL as it can use set instead of list of ids
-	// PRO: more efficient if many memebers per hierarchy level
+	// EXAMPLE 2: segmented extractor
+	// PRO: more intuitive to understand
+	// PRO: more efficient if many memebers per hierarchy level but few hierarchy levels
 	// CON: not bulkified - to many levels will exceede SOQL limit
-	// CON: not reusable for other objects
 	
-	public static List<accountNode> extractAccountHierarchy()
+	public static List<accountNode> extractAccountHierarchySegmented()
 	{
 		Map<Id,accountNode> levelParentMap = new Map<Id,accountNode>{null => null};	// we will first fetch top level parent
-		return extractAccountHierarchy(levelParentMap);
+		return extractAccountHierarchySegmented(levelParentMap);
 	}
 	
-	public static List<accountNode> extractAccountHierarchy(List<Account> parents)
+	public static List<accountNode> extractAccountHierarchySegmented(List<Account> parents)
 	{
 		Map<Id,accountNode> levelParentMap = new Map<Id,accountNode>();
 		for(Account acc : parents) levelParentMap.put(acc.Id,new accountNode(acc));
-		return extractAccountHierarchy(levelParentMap);
+		return extractAccountHierarchySegmented(levelParentMap);
 	}
 	
-	private static List<accountNode> extractAccountHierarchy(Map<Id,accountNode> levelParentMap)
+	private static List<accountNode> extractAccountHierarchySegmented(Map<Id,accountNode> levelParentMap)
 	{
 		// all these lists and maps reference the same place in memory, acting like pointers in C++
 		List<accountNode> accountTree = new List<accountNode>();
