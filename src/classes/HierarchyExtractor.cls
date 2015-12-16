@@ -14,18 +14,50 @@ public with sharing class HierarchyExtractor {
 	// CON: not bulkified - to many levels will exceede SOQL limit
 	// CON: not reusable for other objects
 	
+	public static List<accountNode> extractAccountHierarchy()
+	{
+		List<accountNode> accountTree = new List<accountNode>();
+		return accountTree;
+	}
+	
 	// I included the Node class in the HierarchyExtractor to make the code more compact
 	// but you can convert it to a top level class if needed for e.g. VF components
 	
-	public class objectNode
+	public virtual class objectNode
 	{
-		public Sobject parent;
-		public List<Sobject> children;
+		public Sobject parent {get; private set;}
+		public List<objectNode> children {get; private set;}
 		
 		public objectNode(Sobject parent)
 		{
 			this.parent = parent;
-			this.children = new List<Sobject>();
+			this.children = new List<objectNode>();
+		}
+		
+		public objectNode() {}
+	}
+	
+	public class accountNode extends objectNode
+	{
+		public Account accParent
+		{
+			get
+			{
+				return (Account) parent;
+			}
+			private set;
+		}
+		
+		public accountNode(Account parent)
+		{
+			super((Sobject) parent);
+		}
+		
+		public accountNode() {}
+		
+		public void addChild(accountNode accNode)
+		{
+			children.add((objectNode) accNode);
 		}
 	}
     
