@@ -7,9 +7,60 @@
  
 public with sharing class HierarchyExtractor {
 	
+	// EXAMPLE 1: bulkified extractor
+	// PRO: bulkified
+	// CON: to select a subset of parents, you have to select the objects first yourself, or filter node list
+	
+	public static List<accountNode> extractAccountHierarchyBulk()
+	{
+		List<Account> objectList = [select Name, Id, ParentId from Account order by Name asc];
+		return extractAccountHierarchyBulk(objectList);
+	}
+	
+	// pass in both all parents and children
+	public static List<accountNode> extractAccountHierarchyBulk(List<Account> objectList)
+	{
+		// all these lists and maps reference the same place in memory, acting like pointers in C++
+		List<accountNode> accountTree = new List<accountNode>();
+		Map<Id,accountNode> levelParentMap = new Map<Id,accountNode>{null => null};
+		
+		while(!levelParentMap.isEmpty())
+		{
+			Map<Id,accountNode> nextLevelParentMap = new Map<Id,accountNode>();
+			Integer len = objectList.size();
+			Integer i = 0;
+			while(i < len)
+			{
+				if(levelParentMap.containsKey(objectList.get(i).ParentId))	// if found parent
+				{
+					accountNode child = new accountNode(objectList.get(i));
+					if(child.parent.ParentId != null)
+					{
+						levelParentMap.get(child.parent.ParentId).children.add(child);
+					}
+					else	// if first level parent
+					{
+						accountTree.add(child);
+					}
+					nextLevelParentMap.put(child.parent.Id,child);
+					// remove processed node
+					objectList.remove(i);
+					len--;
+				}
+				else
+				{
+					i++;
+				}
+			}
+			levelParentMap = nextLevelParentMap; 	// children become parents in next iteration
+		}
+		return accountTree;
+	}
+	
 	// EXAMPLE 2: segmented extractor
 	// PRO: more intuitive to understand
 	// PRO: more efficient if many memebers per hierarchy level but few hierarchy levels
+	// PRO: you can pass in top level parents
 	// CON: not bulkified - to many levels will exceede SOQL limit
 	
 	public static List<accountNode> extractAccountHierarchySegmented()
