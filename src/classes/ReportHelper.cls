@@ -11,7 +11,7 @@ public with sharing class ReportHelper {
 		return reportId;
 	}
 	
-	public static Reports.ReportResults getReportSync(Id reportId, Boolean getDeatils)
+	public static Reports.ReportResults getReportSync(Id reportId, Boolean getDetails)
 	{
 		// set metadata config
 		Reports.ReportDescribeResult describe = Reports.ReportManager.describeReport(reportId);
@@ -24,7 +24,7 @@ public with sharing class ReportHelper {
 		sdf.setEndDate('2016-03-31');*/
 		
 		// Run the report
-		Reports.ReportResults results = Reports.ReportManager.runReport(reportId, reportMD, getDeatils);
+		Reports.ReportResults results = Reports.ReportManager.runReport(reportId, reportMD, getDetails);
 		return results;
 	}
 	
@@ -40,28 +40,38 @@ public with sharing class ReportHelper {
 			String factMapKey = groupingVal.getKey() + '!T';
 			// Get the fact map from the report results
 			Reports.ReportFactWithSummaries factSummary = (Reports.ReportFactWithSummaries)results.getFactMap().get(factMapKey);
+			
 			for(Reports.SummaryValue sumVal : factSummary.getAggregates())
-			{
 				System.debug('Summary Value: ' + sumVal.getLabel());
+		}
+	}
+	
+	public static void debugDetailReportData(Reports.ReportResults results)
+	{
+		// Get the first down-grouping in the report
+		Reports.Dimension dim = results.getGroupingsDown();
+		
+		//DEBUG - get horizontal groupings with their summaries
+		for(Reports.GroupingValue groupingVal :  dim.getGroupings())
+		{
+			System.debug('Key: ' + groupingVal.getKey() + ', Label: ' + groupingVal.getLabel() + ', Value: ' +  groupingVal.getValue());
+			String factMapKey = groupingVal.getKey() + '!T';
+			// Get the fact map from the report results
+			Reports.ReportFactWithDetails factDetails = (Reports.ReportFactWithDetails)results.getFactMap().get(factMapKey);
+			
+			String summaries = 'Summary Value: ';
+			for(Reports.SummaryValue sumVal : factDetails.getAggregates())
+				summaries += sumVal.getLabel() + '; ';
+			System.debug(summaries);
+			
+			for(Reports.ReportDetailRow detailRow : factDetails.getRows())
+			{
+				String rowDetails = 'Detail Row: ';
+				for(Reports.ReportDataCell dataCell : detailRow.getDataCells())
+					rowDetails += dataCell.getLabel() + '; ';
+				System.debug(rowDetails);
 			}
 		}
-		
-		// Construct a fact map key, using the grouping key value
-		//String factMapKey = groupingVal.getKey() + '!T';
-		
-		// Get the fact map from the report results
-		//Reports.ReportFactWithDetails factDetails =
-		//	//(Reports.ReportFactWithDetails)results.getFactMap().get(factMapKey);
-		//Reports.ReportFactWithSummaries factSummary =
-			//(Reports.ReportFactWithSummaries)results.getFactMap().get(factMapKey);
-		
-		// Get the first summary amount from the fact map
-		//Reports.SummaryValue sumVal = factSummary.getAggregates()[0];
-		//System.debug('Summary Value: ' + sumVal.getLabel());
-		
-		// Get the field value from the first data cell of the first row of the report
-		//Reports.ReportDetailRow detailRow = factDetails.getRows()[0];
-		//System.debug('DetailRow: ' + detailRow.getDataCells()[0].getLabel());
 	}
 	
 	public static void describeReport(Id reportId)
