@@ -28,7 +28,7 @@ public with sharing class ReportHelper {
 		return results;
 	}
 	
-	public static Reports.ReportResults getReportAsync(Id reportId, Boolean getDetails)
+	public static Reports.ReportInstance getReportAsync(Id reportId, Boolean getDetails)
 	{
 		// set metadata config
 		Reports.ReportDescribeResult describe = Reports.ReportManager.describeReport(reportId);
@@ -42,7 +42,7 @@ public with sharing class ReportHelper {
 		
 		// Run the report
 		Reports.ReportInstance instance = Reports.ReportManager.runAsyncReport(reportId, reportMD, getDetails);
-		return instance.getReportResults();
+		return instance;
 	}
 	
 	public static String debugSummaryReportData(Reports.ReportResults results)
