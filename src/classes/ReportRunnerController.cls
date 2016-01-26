@@ -1,13 +1,13 @@
 public with sharing class ReportRunnerController {
 	
 	public Id reportId {get; set;}
-	public Boolean getDetails {get; set;}
+	public Boolean retrieveDetails {get; set;}
 	public String reportDebug {get; private set;}
 	public Reports.ReportInstance instance;
 	
 	public ReportRunnerController()
 	{
-		getDetails = false;
+		retrieveDetails = false;
 	}
     
     public List<selectOption> getReportList()
@@ -17,6 +17,7 @@ public with sharing class ReportRunnerController {
     	{
     		retList.add(new selectOption(rep.Id,rep.Name));
     	}
+    	reportId = (Id) retList.get(0).getValue();
     	return retList;
     }
     
@@ -24,15 +25,15 @@ public with sharing class ReportRunnerController {
     {
     	reportDebug = '';
     	instance = null;
-    	Reports.ReportResults results = ReportHelper.getReportSync(reportId,getDetails);
-    	reportDebug = getDetails ? ReportHelper.debugSummaryReportData(results) : ReportHelper.debugDetailReportData(results);
+    	Reports.ReportResults results = ReportHelper.getReportSync(reportId,retrieveDetails);
+    	reportDebug = retrieveDetails ? ReportHelper.debugDetailReportData(results) : ReportHelper.debugSummaryReportData(results);
     }
     
     public void runAsync()
     {
     	reportDebug = '';
-    	instance = ReportHelper.getReportAsync(reportId,getDetails);
-    	//reportDebug = getDetails ? ReportHelper.debugSummaryReportData(results) : ReportHelper.debugDetailReportData(results);
+    	instance = ReportHelper.getReportAsync(reportId,retrieveDetails);
+    	waitForAsync();
     }
     
     public void waitForAsync()
@@ -41,8 +42,8 @@ public with sharing class ReportRunnerController {
     	{
     		if(instance.getStatus() == 'Success')
     		{
-    			reportDebug = getDetails ? ReportHelper.debugSummaryReportData(instance.getReportResults()) 
-    				: ReportHelper.debugDetailReportData(instance.getReportResults());
+    			reportDebug = retrieveDetails ? ReportHelper.debugDetailReportData(instance.getReportResults()) 
+    				: ReportHelper.debugSummaryReportData(instance.getReportResults());
     			instance = null;
     		}
     		else
@@ -54,7 +55,8 @@ public with sharing class ReportRunnerController {
     			}
     			else
     			{
-    				reportDebug = 'Report running...';
+    				reportDebug = instance.getStatus() + '...';
+    				instance = Reports.ReportManager.getReportInstance(instance.getId());	// refresh instance
     			}
     		}
     	}
@@ -62,7 +64,8 @@ public with sharing class ReportRunnerController {
     
     public void runAsyncCached()
     {
-    	Reports.ReportResults results;
+    	instance = null;
+    	
 		List<Reports.ReportInstance> ris = Reports.ReportManager.getReportInstances(reportId);
 		Integer lastOne = 0;
 		
@@ -73,10 +76,10 @@ public with sharing class ReportRunnerController {
 		}
 		else
 		{
-			results = ris.get(lastOne).getReportResults();
+			Reports.ReportResults results = ris.get(lastOne).getReportResults();
 			Datetime reqDate = ris.get(lastOne).getRequestDate();
-			reportDebug = getDetails ? ReportHelper.debugSummaryReportData(results) : ReportHelper.debugDetailReportData(results);
-    		if(reqDate != null) reportDebug += '(Run @ ' + reqDate + ')\n';
+			reportDebug = retrieveDetails ? ReportHelper.debugDetailReportData(results) : ReportHelper.debugSummaryReportData(results);
+    		if(reqDate != null) reportDebug += '\n(Run @ ' + reqDate + ')';
 		}
     }
     

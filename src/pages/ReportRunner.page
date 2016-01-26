@@ -1,6 +1,28 @@
-<apex:page >
-<!-- Begin Default Content REMOVE THIS -->
-<h1>Congratulations</h1>
-This is your new Page
-<!-- End Default Content REMOVE THIS -->
+<apex:page title="Report Runner" controller="ReportRunnerController" >
+	
+	<apex:form >
+	
+		<p>
+			<apex:selectList value="{!reportId}" size="1" label="Report" >
+				<apex:selectOptions value="{!reportList}" />
+			</apex:selectList>
+			
+			<apex:selectRadio value="{!retrieveDetails}" label="Get Details" >
+				<apex:selectOption itemValue="true" itemLabel="true"/>
+				<apex:selectOption itemValue="false" itemLabel="false"/>
+			</apex:selectRadio>
+			
+			<br/>
+			
+			<apex:commandButton action="{!runSync}" value="Sync" reRender="reporttext" />
+			<apex:commandButton action="{!runAsync}" value="Async" reRender="reporttext" />
+			<apex:commandButton action="{!runAsyncCached}" value="Cache" reRender="reporttext" />
+		</p>
+		
+		<apex:outputPanel id="reporttext">
+			<apex:actionPoller action="{!waitForAsync}" reRender="reporttext" interval="10" enabled="{!isRunningReport}" />
+			<pre>{!reportDebug}</pre>
+		</apex:outputPanel>
+		
+	</apex:form>
 </apex:page>
